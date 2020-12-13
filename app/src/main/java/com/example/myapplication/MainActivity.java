@@ -4,6 +4,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.media.Image;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.util.Size;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,8 +17,10 @@ import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.common.model.LocalModel;
 import com.google.mlkit.vision.common.InputImage;
@@ -27,6 +31,7 @@ import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions;
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,41 +77,49 @@ public class MainActivity extends AppCompatActivity {
 
                 objectDetector
                         .process(image)
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                //Toast.makeText(getApplicationContext(), "Fail. Sad!", Toast.LENGTH_SHORT).show();
-                                //textView.setText("Fail. Sad!");
-                                imageProxy.close();
-                            }
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(getApplicationContext(), "Fail. Sad!", Toast.LENGTH_SHORT).show();
+                            //textView.setText("Fail. Sad!");
+                            imageProxy.close();
                         })
-                        .addOnSuccessListener(new OnSuccessListener<List<DetectedObject>>() {
-                            @Override
-                            public void onSuccess(List<DetectedObject> results) {
+                        .addOnSuccessListener(results -> {
 
-                                for (DetectedObject detectedObject : results) {
-                                    Rect box = detectedObject.getBoundingBox();
+                            for (DetectedObject detectedObject : results) {
+                                Rect box = detectedObject.getBoundingBox();
 
+                                for (DetectedObject.Label label : detectedObject.getLabels()) {
+                                    String text = label.getText();
+                                    int index = label.getIndex();
+                                    float confidence = label.getConfidence();
+                                    Toast.makeText(getApplicationContext(), text,Toast.LENGTH_LONG).show();
+                                    textView.setText(text);
+                                    textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+                                        @Override
+                                        public void onInit(int status) {
+                                            if(status == TextToSpeech.SUCCESS){
+                                                int result = textToSpeech.setLanguage(Locale.ENGLISH);
 
-                                    for (DetectedObject.Label label : detectedObject.getLabels()) {
-                                        String text = label.getText();
-                                        int index = label.getIndex();
-                                        float confidence = label.getConfidence();
-                                        textView.setText(text);
-
-                                    }}
-                                imageProxy.close();
-                            }
-                        });
+                                                if (result == TextToSpeech.LANG_MISSING_DATA){
+                                                    Log.e("Data","Language not supported");
+                                                }else {
+                                                    textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+                                                }
+                                            } else {
+                                                Log.e("Speech","Failed to initilaze");
+                                            }
+                                        }
+                                    });
+                                }}
+                        }).addOnCompleteListener(task -> imageProxy.close());
 
             }
-            //ImageAnalysis.Builder.fromConfig(new ImageAnalysisConfig).setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST);
 
         }
 
     }
 
 
+    private TextToSpeech textToSpeech;
     PreviewView prevView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -123,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
 
         prevView = findViewById(R.id.viewFinder);
         textView = findViewById(R.id.text_view_id);
+
 
         if(allPermissionsGranted()){
             startCamera();
