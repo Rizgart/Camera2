@@ -93,14 +93,7 @@ public class MainActivity extends AppCompatActivity {
                                     float confidence = label.getConfidence();
                                     Toast.makeText(getApplicationContext(), text,Toast.LENGTH_LONG).show();
                                     //textView.setText(text);
-                                    //textToSpeech.setLanguage(Locale.ENGLISH);
-                                    //textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null);
-                                    try {
-                                        textToSpeech.setLanguage(Locale.ENGLISH);
-                                        textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null);
-                                    } catch (Exception e){
-
-                                    }
+                                    textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
                                 }}
                         }).addOnCompleteListener(task -> imageProxy.close());
 
@@ -129,12 +122,25 @@ public class MainActivity extends AppCompatActivity {
         prevView = findViewById(R.id.viewFinder);
         textView = findViewById(R.id.text_view_id);
 
+        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int i) {
+
+                // if No error is found then only it will run
+                if(i!=TextToSpeech.ERROR){
+                    // To Choose language of speech
+                    textToSpeech.setLanguage(Locale.ENGLISH);
+                }
+            }
+        });
+
 
         if(allPermissionsGranted()){
             startCamera();
         }else{
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
         }
+
 
     }
 
