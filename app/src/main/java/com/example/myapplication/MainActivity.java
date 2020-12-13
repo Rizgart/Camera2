@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
                 // ...
                 LocalModel localModel =
                         new LocalModel.Builder()
-                                .setAssetFilePath("object_detection_mobile_object_localizer_v1_1_default_1.tflite")
+                                .setAssetFilePath("mobilenet_v1_1.0_224_quant.tflite")
                                 .build();
 
                 CustomObjectDetectorOptions customObjectDetectorOptions =
@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
                                 .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
                                 .enableClassification()  // Optional
                                 .build();
+
 
                 ObjectDetector objectDetector =
                         ObjectDetection.getClient(options);
@@ -92,8 +93,6 @@ public class MainActivity extends AppCompatActivity {
                                         int index = label.getIndex();
                                         float confidence = label.getConfidence();
                                         textView.setText(text);
-
-
 
                                     }}
                                 imageProxy.close();
@@ -123,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         prevView = findViewById(R.id.viewFinder);
-        textView = findViewById(R.id.camera_capture_button);
+        textView = findViewById(R.id.text_view_id);
 
         if(allPermissionsGranted()){
             startCamera();
