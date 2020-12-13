@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
                 // ...
                 LocalModel localModel =
                         new LocalModel.Builder()
-                                .setAssetFilePath("mobilenet_v1_1.0_224_quant.tflite")
+                                .setAssetFilePath("efficientnet_lite4_int8_2.tflite")
                                 .build();
 
                 CustomObjectDetectorOptions customObjectDetectorOptions =
@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                 ObjectDetector objectDetector =
-                        ObjectDetection.getClient(options);
+                        ObjectDetection.getClient(customObjectDetectorOptions);
 
                 objectDetector
                         .process(image)
@@ -92,23 +92,15 @@ public class MainActivity extends AppCompatActivity {
                                     int index = label.getIndex();
                                     float confidence = label.getConfidence();
                                     Toast.makeText(getApplicationContext(), text,Toast.LENGTH_LONG).show();
-                                    textView.setText(text);
-                                    textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-                                        @Override
-                                        public void onInit(int status) {
-                                            if(status == TextToSpeech.SUCCESS){
-                                                int result = textToSpeech.setLanguage(Locale.ENGLISH);
+                                    //textView.setText(text);
+                                    //textToSpeech.setLanguage(Locale.ENGLISH);
+                                    //textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null);
+                                    try {
+                                        textToSpeech.setLanguage(Locale.ENGLISH);
+                                        textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null);
+                                    } catch (Exception e){
 
-                                                if (result == TextToSpeech.LANG_MISSING_DATA){
-                                                    Log.e("Data","Language not supported");
-                                                }else {
-                                                    textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
-                                                }
-                                            } else {
-                                                Log.e("Speech","Failed to initilaze");
-                                            }
-                                        }
-                                    });
+                                    }
                                 }}
                         }).addOnCompleteListener(task -> imageProxy.close());
 
